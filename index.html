@@ -372,7 +372,7 @@
 
   <div id="monthly-view" style="display: none;">
     <div class="card grid-container">
-      <div class="section-title">Bearable Trends (Current Month)</div>
+      <div class="section-title">Trends (Current Month)</div>
       <div class="monthly-grid" id="matrix-grid"></div>
     </div>
   </div>
@@ -424,7 +424,7 @@
     const bleedingTag = document.querySelector('#bleeding-status .selected');
 
     // Get all selected mood words from all categories
-    const moodWords = Array.from(document.querySelectorAll('#mood-sad .selected, #mood-anger .selected, #mood-anxious .selected, #mood-peaceful .selected, #mood-joyful .selected')).map(t => t.innerText);
+    const moodWords = Array.from(document.querySelectorAll('#mood-sad .selected, #mood-anger .selected, #mood-anxious .selected, #mood-peaceful .selected, #mood-joyful .selected')).map(t => t.inn[...]
     const physicalWords = Array.from(document.querySelectorAll('#physical-words .selected')).map(t => t.innerText);
 
     const data = JSON.parse(localStorage.getItem('journalData') || '{}');
