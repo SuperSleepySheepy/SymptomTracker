@@ -1,2 +1,389 @@
 # SymptomTracker
 Tracker 4 Brooke
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weeping & Reaping</title>
+  <style>
+    :root {
+      --bg-color: #0c0c0e;
+      --card-bg: #16161a;
+      --accent-red: #9e1b1b;
+      --accent-red-bright: #ff3b3b;
+      --text-main: #e0e0e0;
+      --text-muted: #888888;
+      --border-color: #2a2a30;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      max-width: 600px;
+      width: 100%;
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--accent-red-bright);
+      letter-spacing: 3px;
+      font-size: 1.5rem;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--accent-red);
+      padding-bottom: 8px;
+    }
+
+    /* Lock Screen Overlay */
+    #lock-screen {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--bg-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .pin-input {
+      background: var(--card-bg);
+      border: 1px solid var(--accent-red);
+      color: #fff;
+      font-size: 1.5rem;
+      padding: 10px;
+      text-align: center;
+      letter-spacing: 5px;
+      border-radius: 6px;
+      margin-top: 15px;
+      width: 160px;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .tab-btn.active {
+      border-color: var(--accent-red-bright);
+      background: var(--accent-red);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      color: var(--accent-red-bright);
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+
+    .scale-group {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .scale-btn {
+      flex: 1;
+      padding: 12px 0;
+      background: #202026;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      border-radius: 50%;
+      aspect-ratio: 1;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .scale-btn.selected {
+      background: var(--accent-red);
+      border-color: var(--accent-red-bright);
+      box-shadow: 0 0 8px rgba(255, 59, 59, 0.4);
+    }
+
+    .tag-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag {
+      padding: 6px 12px;
+      background: #202026;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .tag.selected {
+      border-color: var(--accent-red-bright);
+      color: #fff;
+      background: #380b0b;
+    }
+
+    .grid-container { overflow-x: auto; }
+
+    .monthly-grid {
+      display: grid;
+      grid-template-columns: 80px repeat(31, 24px);
+      gap: 2px;
+      font-size: 0.75rem;
+    }
+
+    .grid-cell {
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #1a1a20;
+      border-radius: 2px;
+    }
+
+    .cell-header { font-weight: bold; color: var(--text-muted); }
+    .val-1 { background: #22222a; }
+    .val-2 { background: #4a1515; }
+    .val-3 { background: #7a1b1b; }
+    .val-4 { background: #ad1e1e; }
+    .val-5 { background: #ff3b3b; color: #000; font-weight: bold; }
+
+    button.save-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent-red);
+      border: none;
+      color: #fff;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- SECURITY LOCK SCREEN -->
+<div id="lock-screen">
+  <h2 style="color: var(--accent-red-bright); letter-spacing: 2px;">RESTRICTED ACCESS</h2>
+  <p style="color: var(--text-muted);">Enter PIN Passcode</p>
+  <input type="password" id="pin-code" class="pin-input" maxlength="6" oninput="checkPin(this.value)">
+</div>
+
+<div class="container" id="app-content" style="display: none;">
+  <h1>Weeping & Reaping</h1>
+
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('daily')">Daily Log</button>
+    <button class="tab-btn" onclick="switchTab('monthly')">Monthly Matrix</button>
+  </div>
+
+  <div id="daily-view">
+    <div class="card">
+      <div class="section-title">Date</div>
+      <input type="date" id="entry-date" style="width: 100%; padding: 8px; background: #202026; color: #fff; border: 1px solid var(--border-color); border-radius: 4px;">
+    </div>
+
+    <div class="card">
+      <div class="section-title">Mood Scale (1-5)</div>
+      <div class="scale-group" id="mood-scale">
+        <button class="scale-btn" onclick="selectSingle('mood-scale', 1)">1</button>
+        <button class="scale-btn" onclick="selectSingle('mood-scale', 2)">2</button>
+        <button class="scale-btn" onclick="selectSingle('mood-scale', 3)">3</button>
+        <button class="scale-btn" onclick="selectSingle('mood-scale', 4)">4</button>
+        <button class="scale-btn" onclick="selectSingle('mood-scale', 5)">5</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Mood Adjectives</div>
+      <div class="tag-grid" id="mood-words">
+        <span class="tag" onclick="toggleMulti(this)">Heavy</span>
+        <span class="tag" onclick="toggleMulti(this)">Gloomy</span>
+        <span class="tag" onclick="toggleMulti(this)">Hopeless</span>
+        <span class="tag" onclick="toggleMulti(this)">Short-fused</span>
+        <span class="tag" onclick="toggleMulti(this)">Irritable</span>
+        <span class="tag" onclick="toggleMulti(this)">Tense</span>
+        <span class="tag" onclick="toggleMulti(this)">Overwhelmed</span>
+        <span class="tag" onclick="toggleMulti(this)">Balanced</span>
+        <span class="tag" onclick="toggleMulti(this)">Calm</span>
+        <span class="tag" onclick="toggleMulti(this)">Energized</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Pain Scale (1-5)</div>
+      <div class="scale-group" id="pain-scale">
+        <button class="scale-btn" onclick="selectSingle('pain-scale', 1)">1</button>
+        <button class="scale-btn" onclick="selectSingle('pain-scale', 2)">2</button>
+        <button class="scale-btn" onclick="selectSingle('pain-scale', 3)">3</button>
+        <button class="scale-btn" onclick="selectSingle('pain-scale', 4)">4</button>
+        <button class="scale-btn" onclick="selectSingle('pain-scale', 5)">5</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Physical Symptoms</div>
+      <div class="tag-grid" id="physical-words">
+        <span class="tag" onclick="toggleMulti(this)">Sharp</span>
+        <span class="tag" onclick="toggleMulti(this)">Dull</span>
+        <span class="tag" onclick="toggleMulti(this)">Tight</span>
+        <span class="tag" onclick="toggleMulti(this)">Burning</span>
+        <span class="tag" onclick="toggleMulti(this)">Throbbing</span>
+        <span class="tag" onclick="toggleMulti(this)">Tired</span>
+        <span class="tag" onclick="toggleMulti(this)">Cramping</span>
+        <span class="tag" onclick="toggleMulti(this)">Aching</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Bleeding Status</div>
+      <div class="tag-grid" id="bleeding-status">
+        <span class="tag" onclick="selectSingleTag('bleeding-status', this)">None</span>
+        <span class="tag" onclick="selectSingleTag('bleeding-status', this)">Spotting</span>
+        <span class="tag" onclick="selectSingleTag('bleeding-status', this)">Light</span>
+        <span class="tag" onclick="selectSingleTag('bleeding-status', this)">Heavy</span>
+      </div>
+    </div>
+
+    <button class="save-btn" onclick="saveEntry()">Save Daily Entry</button>
+  </div>
+
+  <div id="monthly-view" style="display: none;">
+    <div class="card grid-container">
+      <div class="section-title">Bearable Trends (Current Month)</div>
+      <div class="monthly-grid" id="matrix-grid"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function checkPin(val) {
+    if (val === "666666") {
+      document.getElementById('lock-screen').style.display = 'none';
+      document.getElementById('app-content').style.display = 'block';
+      document.getElementById('entry-date').valueAsDate = new Date();
+    }
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    if(tab === 'daily') {
+      document.getElementById('daily-view').style.display = 'block';
+      document.getElementById('monthly-view').style.display = 'none';
+      event.target.classList.add('active');
+    } else {
+      document.getElementById('daily-view').style.display = 'none';
+      document.getElementById('monthly-view').style.display = 'block';
+      event.target.classList.add('active');
+      renderMonthlyGrid();
+    }
+  }
+
+  function selectSingle(containerId, val) {
+    const parent = document.getElementById(containerId);
+    parent.querySelectorAll('.scale-btn').forEach(btn => btn.classList.remove('selected'));
+    parent.children[val - 1].classList.add('selected');
+  }
+
+  function selectSingleTag(containerId, el) {
+    const parent = document.getElementById(containerId);
+    parent.querySelectorAll('.tag').forEach(t => t.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function toggleMulti(el) {
+    el.classList.toggle('selected');
+  }
+
+  function saveEntry() {
+    const date = document.getElementById('entry-date').value;
+    const moodBtn = document.querySelector('#mood-scale .selected');
+    const painBtn = document.querySelector('#pain-scale .selected');
+    const bleedingTag = document.querySelector('#bleeding-status .selected');
+
+    const moodWords = Array.from(document.querySelectorAll('#mood-words .selected')).map(t => t.innerText);
+    const physicalWords = Array.from(document.querySelectorAll('#physical-words .selected')).map(t => t.innerText);
+
+    const data = JSON.parse(localStorage.getItem('journalData') || '{}');
+    data[date] = {
+      moodScale: moodBtn ? parseInt(moodBtn.innerText) : 0,
+      painScale: painBtn ? parseInt(painBtn.innerText) : 0,
+      moodWords: moodWords,
+      physicalWords: physicalWords,
+      bleedingStatus: bleedingTag ? bleedingTag.innerText : 'None'
+    };
+
+    localStorage.setItem('journalData', JSON.stringify(data));
+    alert('Entry Saved!');
+  }
+
+  function renderMonthlyGrid() {
+    const grid = document.getElementById('matrix-grid');
+    grid.innerHTML = '';
+    const data = JSON.parse(localStorage.getItem('journalData') || '{}');
+
+    grid.appendChild(createCell('Metrics', 'cell-header'));
+    for(let i = 1; i <= 31; i++) grid.appendChild(createCell(i, 'cell-header'));
+
+    grid.appendChild(createCell('Mood', 'cell-header'));
+    for(let i = 1; i <= 31; i++) {
+      const dateStr = getFormattedDate(i);
+      const val = data[dateStr]?.moodScale || 0;
+      grid.appendChild(createCell(val || '', `val-${val}`));
+    }
+
+    grid.appendChild(createCell('Pain', 'cell-header'));
+    for(let i = 1; i <= 31; i++) {
+      const dateStr = getFormattedDate(i);
+      const val = data[dateStr]?.painScale || 0;
+      grid.appendChild(createCell(val || '', `val-${val}`));
+    }
+  }
+
+  function createCell(text, className) {
+    const div = document.createElement('div');
+    div.className = `grid-cell ${className}`;
+    div.innerText = text;
+    return div;
+  }
+
+  function getFormattedDate(day) {
+    const now = new Date();
+    const d = day < 10 ? '0' + day : day;
+    const m = (now.getMonth() + 1) < 10 ? '0' + (now.getMonth() + 1) : (now.getMonth() + 1);
+    return `${now.getFullYear()}-${m}-${d}`;
+  }
+</script>
+</body>
+</html>
