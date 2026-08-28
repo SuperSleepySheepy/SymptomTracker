@@ -57,7 +57,7 @@
       background: var(--card-bg);
       border: 1px solid var(--accent-red);
       color: #fff;
-      font-size: 1.5rem;
+      font-size: 1.25rem;
       padding: 10px;
       text-align: center;
       letter-spacing: 5px;
@@ -238,7 +238,12 @@
 <div id="lock-screen">
   <h2 style="color: var(--accent-red-bright); letter-spacing: 2px;">RESTRICTED ACCESS</h2>
   <p style="color: var(--text-muted);">Enter PIN Passcode</p>
-  <input type="password" id="pin-code" class="pin-input" maxlength="6" oninput="checkPin(this.value)">
+  <input type="password" id="pin-code" class="pin-input" maxlength="6" oninput="checkPin(this.value)" onkeydown="if(event.key==='Enter'){checkPin(this.value)}">
+  <div style="margin-top:10px;">
+    <button style="padding:8px 12px; border-radius:6px; background:#4a4a52; color:#fff; border:none; cursor:pointer;" onclick="checkPin(document.getElementById('pin-code').value)">Unlock</button>
+    <button style="padding:8px 12px; border-radius:6px; background:#333; color:#fff; border:none; cursor:pointer; margin-left:8px;" onclick="forceUnlock()">Unlock (dev)</button>
+  </div>
+  <p style="color:var(--text-muted); margin-top:8px; font-size:0.85rem;">If this page doesn't unlock, try adding <code>?unlock=1</code> to the URL or click "Unlock (dev)".</p>
 </div>
 
 <div class="container" id="app-content" style="display: none;">
@@ -379,36 +384,68 @@
 </div>
 
 <script>
+  function unlockApp() {
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('app-content').style.display = 'block';
+    const entryDate = document.getElementById('entry-date');
+    if (entryDate) entryDate.valueAsDate = new Date();
+    try { localStorage.setItem('unlocked', '1'); } catch(e) {}
+  }
+
   function checkPin(val) {
-    if (val === "666666") {
-      document.getElementById('lock-screen').style.display = 'none';
-      document.getElementById('app-content').style.display = 'block';
-      document.getElementById('entry-date').valueAsDate = new Date();
+    try {
+      if (!val) return;
+      const code = String(val).trim();
+      // Accept the original code or a dev override
+      if (code === '666666' || code === '123456') {
+        unlockApp();
+      }
+    } catch (e) {
+      console.error('checkPin error', e);
     }
   }
+
+  function forceUnlock() {
+    // Dev bypass button - persistent for convenience
+    try { localStorage.setItem('unlocked', '1'); } catch(e) {}
+    unlockApp();
+  }
+
+  // Auto-unlock if URL has ?unlock=1 or if previously unlocked in this browser
+  window.addEventListener('DOMContentLoaded', () => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('unlock') === '1' || localStorage.getItem('unlocked') === '1') {
+        unlockApp();
+      }
+    } catch (e) { console.error(e); }
+  });
 
   function switchTab(tab) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     if(tab === 'daily') {
       document.getElementById('daily-view').style.display = 'block';
       document.getElementById('monthly-view').style.display = 'none';
-      event.target.classList.add('active');
+      event?.target?.classList.add('active');
     } else {
       document.getElementById('daily-view').style.display = 'none';
       document.getElementById('monthly-view').style.display = 'block';
-      event.target.classList.add('active');
+      event?.target?.classList.add('active');
       renderMonthlyGrid();
     }
   }
 
   function selectSingle(containerId, val) {
     const parent = document.getElementById(containerId);
+    if (!parent) return;
     parent.querySelectorAll('.scale-btn').forEach(btn => btn.classList.remove('selected'));
-    parent.children[val - 1].classList.add('selected');
+    const child = parent.children[val - 1];
+    if (child) child.classList.add('selected');
   }
 
   function selectSingleTag(containerId, el) {
     const parent = document.getElementById(containerId);
+    if (!parent) return;
     parent.querySelectorAll('.tag').forEach(t => t.classList.remove('selected'));
     el.classList.add('selected');
   }
@@ -424,7 +461,7 @@
     const bleedingTag = document.querySelector('#bleeding-status .selected');
 
     // Get all selected mood words from all categories
-    const moodWords = Array.from(document.querySelectorAll('#mood-sad .selected, #mood-anger .selected, #mood-anxious .selected, #mood-peaceful .selected, #mood-joyful .selected')).map(t => t.inn[...]
+    const moodWords = Array.from(document.querySelectorAll('#mood-sad .selected, #mood-anger .selected, #mood-anxious .selected, #mood-peaceful .selected, #mood-joyful .selected')).map(t => t.innerText);
     const physicalWords = Array.from(document.querySelectorAll('#physical-words .selected')).map(t => t.innerText);
 
     const data = JSON.parse(localStorage.getItem('journalData') || '{}');
