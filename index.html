@@ -27,7 +27,7 @@
     }
 
     .container {
-      max-width: 600px;
+      max-width: 700px;
       width: 100%;
     }
 
@@ -41,7 +41,6 @@
       padding-bottom: 8px;
     }
 
-    /* Lock Screen Overlay */
     #lock-screen {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -70,6 +69,7 @@
       display: flex;
       gap: 10px;
       margin-bottom: 20px;
+      flex-wrap: wrap;
     }
 
     .tab-btn {
@@ -81,6 +81,7 @@
       border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
+      min-width: 140px;
     }
 
     .tab-btn.active {
@@ -170,13 +171,22 @@
       font-size: 0.75rem;
     }
 
+    .weekly-grid {
+      display: grid;
+      grid-template-columns: 80px repeat(7, 1fr);
+      gap: 2px;
+      font-size: 0.8rem;
+    }
+
     .grid-cell {
-      height: 24px;
+      min-height: 24px;
       display: flex;
       align-items: center;
       justify-content: center;
       background: #1a1a20;
       border-radius: 2px;
+      padding: 4px;
+      text-align: center;
     }
 
     .cell-header { font-weight: bold; color: var(--text-muted); }
@@ -204,10 +214,12 @@
       display: flex;
       gap: 10px;
       margin-bottom: 20px;
+      flex-wrap: wrap;
     }
 
     .export-btn {
       flex: 1;
+      min-width: 180px;
       padding: 14px;
       background: #4a4a52;
       border: none;
@@ -223,18 +235,100 @@
       background: #5a5a62;
     }
 
-    /* Hide Netlify Badge */
-    [data-netlify-badge] {
-      display: none !important;
+    .detail-row {
+      margin-bottom: 8px;
+      line-height: 1.5;
     }
-    .netlify-badge {
-      display: none !important;
+
+    .detail-label {
+      color: var(--accent-red-bright);
+      font-weight: bold;
+    }
+
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        color: #000;
+        padding: 0;
+      }
+
+      body * {
+        visibility: hidden;
+      }
+
+      #print-report, #print-report * {
+        visibility: visible;
+      }
+
+      #print-report {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 24px;
+        box-sizing: border-box;
+        background: #fff;
+        color: #000;
+      }
+
+      #print-report .report-card {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 12px;
+      }
+
+      #print-report .report-title {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 4px;
+      }
+
+      #print-report .report-subtitle {
+        color: #444;
+        margin-bottom: 16px;
+      }
+
+      #print-report .report-grid {
+        display: grid;
+        gap: 2px;
+        margin-bottom: 20px;
+        font-size: 11px;
+      }
+
+      #print-report .report-grid.monthly {
+        grid-template-columns: 80px repeat(31, 1fr);
+      }
+
+      #print-report .report-grid.weekly {
+        grid-template-columns: 80px repeat(7, 1fr);
+      }
+
+      #print-report .report-cell {
+        border: 1px solid #ccc;
+        min-height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px;
+        box-sizing: border-box;
+        text-align: center;
+      }
+
+      #print-report .report-header {
+        font-weight: bold;
+        background: #f4f4f4;
+      }
     }
   </style>
 </head>
 <body>
 
-<!-- SECURITY LOCK SCREEN -->
 <div id="lock-screen">
   <h2 style="color: var(--accent-red-bright); letter-spacing: 2px;">RESTRICTED ACCESS</h2>
   <p style="color: var(--text-muted);">Enter PIN Passcode</p>
@@ -248,8 +342,9 @@
   <h1>Weeping & Reaping</h1>
 
   <div class="nav-tabs">
-    <button class="tab-btn active" onclick="switchTab('daily')">Daily Log</button>
-    <button class="tab-btn" onclick="switchTab('monthly')">Monthly Matrix</button>
+    <button class="tab-btn active" onclick="switchTab('daily', event)">Daily Log</button>
+    <button class="tab-btn" onclick="switchTab('monthly', event)">Monthly Matrix</button>
+    <button class="tab-btn" onclick="switchTab('details', event)">Daily Details</button>
   </div>
 
   <div id="daily-view">
@@ -271,7 +366,7 @@
 
     <div class="card">
       <div class="section-title">Mood Adjectives</div>
-      
+
       <div class="mood-category">
         <div class="mood-category-label">Sad / Low / Hurt</div>
         <div class="tag-grid" id="mood-sad">
@@ -301,7 +396,7 @@
         <div class="tag-grid" id="mood-anxious">
           <span class="tag" onclick="toggleMulti(this)">Tense</span>
           <span class="tag" onclick="toggleMulti(this)">On-Edge</span>
-          <span class="tag" onclick="toggleMulti(this)">Overwhelwhelmed</span>
+          <span class="tag" onclick="toggleMulti(this)">Overwhelmed</span>
           <span class="tag" onclick="toggleMulti(this)">Panicky</span>
           <span class="tag" onclick="toggleMulti(this)">Worried</span>
         </div>
@@ -367,9 +462,10 @@
     </div>
 
     <button class="save-btn" onclick="saveEntry()">Save Daily Entry</button>
-    
+
     <div class="button-group">
-      <button class="export-btn" onclick="exportData()">📥 Export Data</button>
+      <button class="export-btn" onclick="exportWeeklySummary()">Export Weekly PDF</button>
+      <button class="export-btn" onclick="exportMonthlySummary()">Export Monthly PDF</button>
     </div>
   </div>
 
@@ -379,15 +475,21 @@
       <div class="monthly-grid" id="matrix-grid"></div>
     </div>
   </div>
+
+  <div id="details-view" style="display: none;">
+    <div class="card">
+      <div class="section-title">Daily Details (Current Month)</div>
+      <div id="details-list"></div>
+    </div>
+  </div>
 </div>
 
+<div id="print-report" style="display:none;"></div>
+
 <script>
-  // Non-persistent unlock: does NOT write to localStorage
   function unlockApp() {
-    const lock = document.getElementById('lock-screen');
-    const app = document.getElementById('app-content');
-    if (lock) lock.style.display = 'none';
-    if (app) app.style.display = 'block';
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('app-content').style.display = 'block';
     const entryDate = document.getElementById('entry-date');
     if (entryDate) entryDate.valueAsDate = new Date();
   }
@@ -404,31 +506,34 @@
     }
   }
 
-  // Auto-unlock ONLY if URL has ?unlock=1. No persistence.
   window.addEventListener('DOMContentLoaded', () => {
     try {
       const params = new URLSearchParams(window.location.search);
       if (params.get('unlock') === '1') {
         unlockApp();
       }
-      // attach Enter handler
       const pin = document.getElementById('pin-code');
       if (pin) pin.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') checkPin(pin.value); });
     } catch (e) { console.error(e); }
   });
 
-  function switchTab(tab) {
+  function switchTab(tab, evt) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('daily-view').style.display = 'none';
+    document.getElementById('monthly-view').style.display = 'none';
+    document.getElementById('details-view').style.display = 'none';
+
     if (tab === 'daily') {
       document.getElementById('daily-view').style.display = 'block';
-      document.getElementById('monthly-view').style.display = 'none';
-      event?.target?.classList.add('active');
-    } else {
-      document.getElementById('daily-view').style.display = 'none';
+    } else if (tab === 'monthly') {
       document.getElementById('monthly-view').style.display = 'block';
-      event?.target?.classList.add('active');
       renderMonthlyGrid();
+    } else if (tab === 'details') {
+      document.getElementById('details-view').style.display = 'block';
+      renderDailyDetails();
     }
+
+    if (evt && evt.target) evt.target.classList.add('active');
   }
 
   function selectSingle(containerId, val) {
@@ -446,7 +551,9 @@
     el.classList.add('selected');
   }
 
-  function toggleMulti(el) { el.classList.toggle('selected'); }
+  function toggleMulti(el) {
+    el.classList.toggle('selected');
+  }
 
   function saveEntry() {
     const date = document.getElementById('entry-date').value;
@@ -454,7 +561,6 @@
     const painBtn = document.querySelector('#pain-scale .selected');
     const bleedingTag = document.querySelector('#bleeding-status .selected');
 
-    // fixed mapping: use innerText
     const moodWords = Array.from(document.querySelectorAll('#mood-sad .selected, #mood-anger .selected, #mood-anxious .selected, #mood-peaceful .selected, #mood-joyful .selected')).map(t => t.innerText);
     const physicalWords = Array.from(document.querySelectorAll('#physical-words .selected')).map(t => t.innerText);
 
@@ -469,42 +575,15 @@
 
     localStorage.setItem('journalData', JSON.stringify(data));
     alert('Entry Saved!');
+    renderDailyDetails();
+    renderMonthlyGrid();
   }
 
-  function exportData() {
-    const data = localStorage.getItem('journalData') || '{}';
-    const timestamp = new Date().toISOString().split('T')[0];
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(data);
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `symptom_tracker_backup_${timestamp}.json`);
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-    alert('Data exported successfully!');
-  }
-
-  function renderMonthlyGrid() {
-    const grid = document.getElementById('matrix-grid');
-    grid.innerHTML = '';
-    const data = JSON.parse(localStorage.getItem('journalData') || '{}');
-
-    grid.appendChild(createCell('Metrics', 'cell-header'));
-    for(let i = 1; i <= 31; i++) grid.appendChild(createCell(i, 'cell-header'));
-
-    grid.appendChild(createCell('Mood', 'cell-header'));
-    for(let i = 1; i <= 31; i++) {
-      const dateStr = getFormattedDate(i);
-      const val = data[dateStr]?.moodScale || 0;
-      grid.appendChild(createCell(val || '', `val-${val}`));
-    }
-
-    grid.appendChild(createCell('Pain', 'cell-header'));
-    for(let i = 1; i <= 31; i++) {
-      const dateStr = getFormattedDate(i);
-      const val = data[dateStr]?.painScale || 0;
-      grid.appendChild(createCell(val || '', `val-${val}`));
-    }
+  function getFormattedDate(day) {
+    const now = new Date();
+    const d = String(day).padStart(2, '0');
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    return `${now.getFullYear()}-${m}-${d}`;
   }
 
   function createCell(text, className) {
@@ -514,11 +593,193 @@
     return div;
   }
 
-  function getFormattedDate(day) {
+  function renderMonthlyGrid() {
+    const grid = document.getElementById('matrix-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    const data = JSON.parse(localStorage.getItem('journalData') || '{}');
+
+    grid.appendChild(createCell('Metrics', 'cell-header'));
+    for (let i = 1; i <= 31; i++) grid.appendChild(createCell(i, 'cell-header'));
+
+    grid.appendChild(createCell('Mood', 'cell-header'));
+    for (let i = 1; i <= 31; i++) {
+      const dateStr = getFormattedDate(i);
+      const val = data[dateStr]?.moodScale || 0;
+      grid.appendChild(createCell(val || '', val ? `val-${val}` : ''));
+    }
+
+    grid.appendChild(createCell('Pain', 'cell-header'));
+    for (let i = 1; i <= 31; i++) {
+      const dateStr = getFormattedDate(i);
+      const val = data[dateStr]?.painScale || 0;
+      grid.appendChild(createCell(val || '', val ? `val-${val}` : ''));
+    }
+  }
+
+  function renderDailyDetails() {
+    const container = document.getElementById('details-list');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const data = JSON.parse(localStorage.getItem('journalData') || '{}');
     const now = new Date();
-    const d = day < 10 ? '0' + day : day;
-    const m = (now.getMonth() + 1) < 10 ? '0' + (now.getMonth() + 1) : (now.getMonth() + 1);
-    return `${now.getFullYear()}-${m}-${d}`;
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    const entries = Object.entries(data)
+      .filter(([date]) => date.startsWith(currentMonth))
+      .sort((a, b) => b[0].localeCompare(a[0]));
+
+    if (entries.length === 0) {
+      container.innerHTML = '<div class="empty-state">No saved entries for this month.</div>';
+      return;
+    }
+
+    entries.forEach(([date, entry]) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="section-title">${date}</div>
+        <div class="detail-row"><span class="detail-label">Mood Scale:</span> ${entry.moodScale || '—'}</div>
+        <div class="detail-row"><span class="detail-label">Pain Scale:</span> ${entry.painScale || '—'}</div>
+        <div class="detail-row"><span class="detail-label">Bleeding:</span> ${entry.bleedingStatus || '—'}</div>
+        <div class="detail-row"><span class="detail-label">Mood:</span> ${(entry.moodWords && entry.moodWords.length) ? entry.moodWords.join(', ') : '—'}</div>
+        <div class="detail-row"><span class="detail-label">Physical:</span> ${(entry.physicalWords && entry.physicalWords.length) ? entry.physicalWords.join(', ') : '—'}</div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function getMonthEntries() {
+    const data = JSON.parse(localStorage.getItem('journalData') || '{}');
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    return Object.entries(data)
+      .filter(([date]) => date.startsWith(currentMonth))
+      .sort((a, b) => a[0].localeCompare(b[0]));
+  }
+
+  function getWeekEntries() {
+    const data = JSON.parse(localStorage.getItem('journalData') || '{}');
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const sunday = new Date(now);
+    sunday.setDate(now.getDate() - dayOfWeek);
+    sunday.setHours(0, 0, 0, 0);
+
+    const saturday = new Date(sunday);
+    saturday.setDate(sunday.getDate() + 6);
+    saturday.setHours(23, 59, 59, 999);
+
+    return Object.entries(data)
+      .filter(([date]) => {
+        const d = new Date(date + 'T00:00:00');
+        return d >= sunday && d <= saturday;
+      })
+      .sort((a, b) => a[0].localeCompare(b[0]));
+  }
+
+  function formatDisplayDate(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  function buildReportGrid(entries, mode) {
+    if (mode === 'weekly') {
+      const now = new Date();
+      const dayOfWeek = now.getDay();
+      const sunday = new Date(now);
+      sunday.setDate(now.getDate() - dayOfWeek);
+      const dates = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(sunday);
+        d.setDate(sunday.getDate() + i);
+        dates.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+      }
+      const map = Object.fromEntries(entries);
+
+      let html = '<div class="report-grid weekly">';
+      html += '<div class="report-cell report-header">Metric</div>';
+      dates.forEach(date => html += `<div class="report-cell report-header">${new Date(date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })}</div>`);
+      html += '<div class="report-cell report-header">Mood</div>';
+      dates.forEach(date => html += `<div class="report-cell">${map[date]?.moodScale || ''}</div>`);
+      html += '<div class="report-cell report-header">Pain</div>';
+      dates.forEach(date => html += `<div class="report-cell">${map[date]?.painScale || ''}</div>`);
+      html += '</div>';
+      return html;
+    }
+
+    const now = new Date();
+    const month = now.getMonth();
+    const year = now.getFullYear();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const map = Object.fromEntries(entries);
+
+    let html = '<div class="report-grid monthly">';
+    html += '<div class="report-cell report-header">Metric</div>';
+    for (let i = 1; i <= daysInMonth; i++) html += `<div class="report-cell report-header">${i}</div>`;
+    html += '<div class="report-cell report-header">Mood</div>';
+    for (let i = 1; i <= daysInMonth; i++) {
+      const date = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+      html += `<div class="report-cell">${map[date]?.moodScale || ''}</div>`;
+    }
+    html += '<div class="report-cell report-header">Pain</div>';
+    for (let i = 1; i <= daysInMonth; i++) {
+      const date = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+      html += `<div class="report-cell">${map[date]?.painScale || ''}</div>`;
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function buildDetailsList(entries) {
+    if (!entries.length) {
+      return '<div class="report-card">No saved entries for this period.</div>';
+    }
+
+    return entries.map(([date, entry]) => `
+      <div class="report-card">
+        <div><strong>${formatDisplayDate(date)}</strong></div>
+        <div>Mood Scale: ${entry.moodScale || '—'}</div>
+        <div>Pain Scale: ${entry.painScale || '—'}</div>
+        <div>Bleeding: ${entry.bleedingStatus || '—'}</div>
+        <div>Mood: ${(entry.moodWords && entry.moodWords.length) ? entry.moodWords.join(', ') : '—'}</div>
+        <div>Physical: ${(entry.physicalWords && entry.physicalWords.length) ? entry.physicalWords.join(', ') : '—'}</div>
+      </div>
+    `).join('');
+  }
+
+  function openPrintReport(title, subtitle, entries, mode) {
+    const report = document.getElementById('print-report');
+    report.innerHTML = `
+      <div class="report-title">${title}</div>
+      <div class="report-subtitle">${subtitle}</div>
+      ${buildReportGrid(entries, mode)}
+      ${buildDetailsList(entries)}
+    `;
+    report.style.display = 'block';
+    window.print();
+    report.style.display = 'none';
+  }
+
+  function exportWeeklySummary() {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const sunday = new Date(now);
+    sunday.setDate(now.getDate() - dayOfWeek);
+    const saturday = new Date(sunday);
+    saturday.setDate(sunday.getDate() + 6);
+
+    const entries = getWeekEntries();
+    const subtitle = `${sunday.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} – ${saturday.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    openPrintReport('Weekly Symptom Summary', subtitle, entries, 'weekly');
+  }
+
+  function exportMonthlySummary() {
+    const now = new Date();
+    const titleMonth = now.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    const entries = getMonthEntries();
+    openPrintReport('Monthly Symptom Summary', titleMonth, entries, 'monthly');
   }
 </script>
 </body>
