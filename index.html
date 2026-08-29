@@ -240,8 +240,7 @@
   <p style="color: var(--text-muted);">Enter PIN Passcode</p>
   <input type="password" id="pin-code" class="pin-input" maxlength="6" oninput="checkPin(this.value)" onkeydown="if(event.key==='Enter'){checkPin(this.value)}">
   <div style="margin-top:10px;">
-    <button style="padding:8px 12px; border-radius:6px; background:#4a4a52; color:#fff; border:none; cursor:pointer;" onclick="checkPin(document.getElementById('pin-code').value)">Unlock</button>
-    <button style="padding:8px 12px; border-radius:6px; background:#333; color:#fff; border:none; cursor:pointer; margin-left:8px;" onclick="forceUnlock()">Unlock (dev)</button>
+    <button id="unlock-btn" style="padding:8px 12px; border-radius:6px; background:#4a4a52; color:#fff; border:none; cursor:pointer;" onclick="checkPin(document.getElementById('pin-code').value)">Unlock</button>
   </div>
 </div>
 
@@ -308,4 +307,219 @@
         </div>
       </div>
 
+      <div class="mood-category">
+        <div class="mood-category-label">Peaceful / Calm</div>
+        <div class="tag-grid" id="mood-peaceful">
+          <span class="tag" onclick="toggleMulti(this)">Balanced</span>
+          <span class="tag" onclick="toggleMulti(this)">Calm</span>
+          <span class="tag" onclick="toggleMulti(this)">Content</span>
+          <span class="tag" onclick="toggleMulti(this)">Settled</span>
+          <span class="tag" onclick="toggleMulti(this)">Safe</span>
+        </div>
+      </div>
+
+      <div class="mood-category">
+        <div class="mood-category-label">Joyful / Connected</div>
+        <div class="tag-grid" id="mood-joyful">
+          <span class="tag" onclick="toggleMulti(this)">Bright</span>
+          <span class="tag" onclick="toggleMulti(this)">Clear</span>
+          <span class="tag" onclick="toggleMulti(this)">Capable</span>
+          <span class="tag" onclick="toggleMulti(this)">Energized</span>
+          <span class="tag" onclick="toggleMulti(this)">Motivated</span>
+          <span class="tag" onclick="toggleMulti(this)">Confident</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Pain Scale (1-5)</div>
+      <div class="scale-group" id="pain-scale">
+        <button class="scale-btn" onclick="selectSingle('pain-scale', 1)">1</button>
+        <button class="scale-btn" onclick="selectSingle('pain-scale', 2)">2</button>
+        <button class="scale-btn" onclick="selectSingle('pain-scale', 3)">3</button>
+        <button class="scale-btn" onclick="selectSingle('pain-scale', 4)">4</button>
+        <button class="scale-btn" onclick="selectSingle('pain-scale', 5)">5</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Physical Symptoms</div>
+      <div class="tag-grid" id="physical-words">
+        <span class="tag" onclick="toggleMulti(this)">Sharp</span>
+        <span class="tag" onclick="toggleMulti(this)">Dull</span>
+        <span class="tag" onclick="toggleMulti(this)">Tight</span>
+        <span class="tag" onclick="toggleMulti(this)">Burning</span>
+        <span class="tag" onclick="toggleMulti(this)">Throbbing</span>
+        <span class="tag" onclick="toggleMulti(this)">Tired</span>
+        <span class="tag" onclick="toggleMulti(this)">Cramping</span>
+        <span class="tag" onclick="toggleMulti(this)">Aching</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Bleeding Status</div>
+      <div class="tag-grid" id="bleeding-status">
+        <span class="tag" onclick="selectSingleTag('bleeding-status', this)">None</span>
+        <span class="tag" onclick="selectSingleTag('bleeding-status', this)">Spotting</span>
+        <span class="tag" onclick="selectSingleTag('bleeding-status', this)">Light</span>
+        <span class="tag" onclick="selectSingleTag('bleeding-status', this)">Heavy</span>
+      </div>
+    </div>
+
+    <button class="save-btn" onclick="saveEntry()">Save Daily Entry</button>
     
+    <div class="button-group">
+      <button class="export-btn" onclick="exportData()">📥 Export Data</button>
+    </div>
+  </div>
+
+  <div id="monthly-view" style="display: none;">
+    <div class="card grid-container">
+      <div class="section-title">Trends (Current Month)</div>
+      <div class="monthly-grid" id="matrix-grid"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Non-persistent unlock: does NOT write to localStorage
+  function unlockApp() {
+    const lock = document.getElementById('lock-screen');
+    const app = document.getElementById('app-content');
+    if (lock) lock.style.display = 'none';
+    if (app) app.style.display = 'block';
+    const entryDate = document.getElementById('entry-date');
+    if (entryDate) entryDate.valueAsDate = new Date();
+  }
+
+  function checkPin(val) {
+    try {
+      if (!val) return;
+      const code = String(val).trim();
+      if (code === '666666') {
+        unlockApp();
+      }
+    } catch (e) {
+      console.error('checkPin error', e);
+    }
+  }
+
+  // Auto-unlock ONLY if URL has ?unlock=1. No persistence.
+  window.addEventListener('DOMContentLoaded', () => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('unlock') === '1') {
+        unlockApp();
+      }
+      // attach Enter handler
+      const pin = document.getElementById('pin-code');
+      if (pin) pin.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') checkPin(pin.value); });
+    } catch (e) { console.error(e); }
+  });
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    if (tab === 'daily') {
+      document.getElementById('daily-view').style.display = 'block';
+      document.getElementById('monthly-view').style.display = 'none';
+      event?.target?.classList.add('active');
+    } else {
+      document.getElementById('daily-view').style.display = 'none';
+      document.getElementById('monthly-view').style.display = 'block';
+      event?.target?.classList.add('active');
+      renderMonthlyGrid();
+    }
+  }
+
+  function selectSingle(containerId, val) {
+    const parent = document.getElementById(containerId);
+    if (!parent) return;
+    parent.querySelectorAll('.scale-btn').forEach(btn => btn.classList.remove('selected'));
+    const child = parent.children[val - 1];
+    if (child) child.classList.add('selected');
+  }
+
+  function selectSingleTag(containerId, el) {
+    const parent = document.getElementById(containerId);
+    if (!parent) return;
+    parent.querySelectorAll('.tag').forEach(t => t.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function toggleMulti(el) { el.classList.toggle('selected'); }
+
+  function saveEntry() {
+    const date = document.getElementById('entry-date').value;
+    const moodBtn = document.querySelector('#mood-scale .selected');
+    const painBtn = document.querySelector('#pain-scale .selected');
+    const bleedingTag = document.querySelector('#bleeding-status .selected');
+
+    // fixed mapping: use innerText
+    const moodWords = Array.from(document.querySelectorAll('#mood-sad .selected, #mood-anger .selected, #mood-anxious .selected, #mood-peaceful .selected, #mood-joyful .selected')).map(t => t.innerText);
+    const physicalWords = Array.from(document.querySelectorAll('#physical-words .selected')).map(t => t.innerText);
+
+    const data = JSON.parse(localStorage.getItem('journalData') || '{}');
+    data[date] = {
+      moodScale: moodBtn ? parseInt(moodBtn.innerText) : 0,
+      painScale: painBtn ? parseInt(painBtn.innerText) : 0,
+      moodWords: moodWords,
+      physicalWords: physicalWords,
+      bleedingStatus: bleedingTag ? bleedingTag.innerText : 'None'
+    };
+
+    localStorage.setItem('journalData', JSON.stringify(data));
+    alert('Entry Saved!');
+  }
+
+  function exportData() {
+    const data = localStorage.getItem('journalData') || '{}';
+    const timestamp = new Date().toISOString().split('T')[0];
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(data);
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `symptom_tracker_backup_${timestamp}.json`);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+    alert('Data exported successfully!');
+  }
+
+  function renderMonthlyGrid() {
+    const grid = document.getElementById('matrix-grid');
+    grid.innerHTML = '';
+    const data = JSON.parse(localStorage.getItem('journalData') || '{}');
+
+    grid.appendChild(createCell('Metrics', 'cell-header'));
+    for(let i = 1; i <= 31; i++) grid.appendChild(createCell(i, 'cell-header'));
+
+    grid.appendChild(createCell('Mood', 'cell-header'));
+    for(let i = 1; i <= 31; i++) {
+      const dateStr = getFormattedDate(i);
+      const val = data[dateStr]?.moodScale || 0;
+      grid.appendChild(createCell(val || '', `val-${val}`));
+    }
+
+    grid.appendChild(createCell('Pain', 'cell-header'));
+    for(let i = 1; i <= 31; i++) {
+      const dateStr = getFormattedDate(i);
+      const val = data[dateStr]?.painScale || 0;
+      grid.appendChild(createCell(val || '', `val-${val}`));
+    }
+  }
+
+  function createCell(text, className) {
+    const div = document.createElement('div');
+    div.className = `grid-cell ${className}`;
+    div.innerText = text;
+    return div;
+  }
+
+  function getFormattedDate(day) {
+    const now = new Date();
+    const d = day < 10 ? '0' + day : day;
+    const m = (now.getMonth() + 1) < 10 ? '0' + (now.getMonth() + 1) : (now.getMonth() + 1);
+    return `${now.getFullYear()}-${m}-${d}`;
+  }
+</script>
+</body>
+</html>
