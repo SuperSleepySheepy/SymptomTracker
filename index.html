@@ -243,7 +243,6 @@
     <button style="padding:8px 12px; border-radius:6px; background:#4a4a52; color:#fff; border:none; cursor:pointer;" onclick="checkPin(document.getElementById('pin-code').value)">Unlock</button>
     <button style="padding:8px 12px; border-radius:6px; background:#333; color:#fff; border:none; cursor:pointer; margin-left:8px;" onclick="forceUnlock()">Unlock (dev)</button>
   </div>
-  <p style="color:var(--text-muted); margin-top:8px; font-size:0.85rem;">If this page doesn't unlock, try adding <code>?unlock=1</code> to the URL or click "Unlock (dev)".</p>
 </div>
 
 <div class="container" id="app-content" style="display: none;">
@@ -389,7 +388,6 @@
     document.getElementById('app-content').style.display = 'block';
     const entryDate = document.getElementById('entry-date');
     if (entryDate) entryDate.valueAsDate = new Date();
-    try { localStorage.setItem('unlocked', '1'); } catch(e) {}
   }
 
   function checkPin(val) {
@@ -406,16 +404,15 @@
   }
 
   function forceUnlock() {
-    // Dev bypass button - persistent for convenience
-    try { localStorage.setItem('unlocked', '1'); } catch(e) {}
+    // Dev bypass button - does NOT persist across sessions
     unlockApp();
   }
 
-  // Auto-unlock if URL has ?unlock=1 or if previously unlocked in this browser
+  // Auto-unlock ONLY if URL has ?unlock=1 (no persistent localStorage)
   window.addEventListener('DOMContentLoaded', () => {
     try {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('unlock') === '1' || localStorage.getItem('unlocked') === '1') {
+      if (params.get('unlock') === '1') {
         unlockApp();
       }
     } catch (e) { console.error(e); }
