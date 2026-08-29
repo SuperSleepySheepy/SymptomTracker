@@ -238,7 +238,7 @@
 <div id="lock-screen">
   <h2 style="color: var(--accent-red-bright); letter-spacing: 2px;">RESTRICTED ACCESS</h2>
   <p style="color: var(--text-muted);">Enter PIN Passcode</p>
-  <input type="password" id="pin-code" class="pin-input" maxlength="6" oninput="checkPin(this.value)" onkeydown="if(event.key==='Enter'){checkPin(this.value)}">
+  <input type="password" id="pin-code" class="pin-input" maxlength="6" onkeydown="if(event.key==='Enter'){checkPin(this.value)}">
   <div style="margin-top:10px;">
     <button id="unlock-btn" style="padding:8px 12px; border-radius:6px; background:#4a4a52; color:#fff; border:none; cursor:pointer;" onclick="checkPin(document.getElementById('pin-code').value)">Unlock</button>
   </div>
@@ -301,7 +301,7 @@
         <div class="tag-grid" id="mood-anxious">
           <span class="tag" onclick="toggleMulti(this)">Tense</span>
           <span class="tag" onclick="toggleMulti(this)">On-Edge</span>
-          <span class="tag" onclick="toggleMulti(this)">Overwhelmed</span>
+          <span class="tag" onclick="toggleMulti(this)">Overwhelwhelmed</span>
           <span class="tag" onclick="toggleMulti(this)">Panicky</span>
           <span class="tag" onclick="toggleMulti(this)">Worried</span>
         </div>
